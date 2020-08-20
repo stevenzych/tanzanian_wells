@@ -1,4 +1,5 @@
 # Four basic functions used to help clean and sort data.
+# Pandas-dependent. So sue me.
 
 def many_count(ls, df, end=5):
     '''
