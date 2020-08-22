@@ -5,7 +5,7 @@
 
 This project looks at the condition of water wells in the East-African country of Tanzania, with the aim of building a machine learning model that predicts the condition of any given well. Predictions are made from a set of independent variables such as `funder`, `yr_built`, `region`, and so on. All of the data is available for free at [this competition link](https://www.drivendata.org/competitions/7/pump-it-up-data-mining-the-water-table/).
 
-The models in this project were based exclusively on the files named `train_labels.csv` and `train_vals.csv`, though a third `target_vals.csv` is also available for competition entries. The data was manually cleaned in the notebook `cleaning.ipynb` and made into a Pandas DataFrame. This DataFrame (boasting 59,000 rows and 31 features) was then brough to the `modeling.ipynb` notebook where four main ML algorithims were used. A general overview of the cleaning process and all ML models are provided in the following sections.
+The models in this project were based exclusively on the files named `train_labels.csv` and `train_vals.csv`, though a third `target_vals.csv` is also available for competition entries. The data was manually cleaned in the notebook `cleaning.ipynb` and made into a Pandas DataFrame. This DataFrame (boasting 59,000 rows and 31 features) was then brought to the `modeling.ipynb` notebook where four main ML algorithms were used. A general overview of the cleaning process and all ML models are provided in the following sections.
 
 To be explicit, this is a **ternary classification problem,** where the three possible classes are **functional, functional-needs-repairs, and nonfunctional.** The aim of this project is to make a model that accurately applies these three labels, and later to investigate **what features have the greatest effect on predictions.** In doing so, the Tanzanian government (as well as independent aid organizations) can be aided in distributing resources and help to communities in need of clean, accessible water.
 
@@ -103,7 +103,7 @@ The final model, as revealed previously, was decided to be **the RandomForestCla
 
 ## Recommendations
 
-While this project doesn't exaclty have any *business* recommendations, per se, they are a couple key insights that can be used in the field when assessing well functionality and predicting its cause(s). This plot below illustrates feature importance in predicting a well's functionality. In other words, it shows what data is most vital in getting that critical guess right. (Orange bars are just to draw attention to most significant features, they are not discrete categories.)
+While this project doesn't exactly have any *business* recommendations, per se, they are a couple key insights that can be used in the field when assessing well functionality and predicting its cause(s). This plot below illustrates feature importance in predicting a well's functionality. In other words, it shows what data is most vital in getting that critical guess right. (Orange bars are just to draw attention to most significant features, they are not discrete categories.)
 
 ![Feature Importances For Well Classification](/images/rf_model_importances.PNG)
 
@@ -111,7 +111,7 @@ A well's **latitude, longitude, and height** all play a clear role in its classi
 
 > Note: I am not sure why ID is a powerful predictor here. But I suspect it may have a relationship to the time the ID was assigned, though I was unable to identify any datetime patterns myself.
 
-It is no surprise that a well's geospatial data provides important predictors, seeing as the previous scatter plot showed clustering. It *is,* however, a surpise that a well's construction date within the year plays a role, as does the elusive "other" form of extraction. As such I encourage the well managers and water committees of the world to:
+It is no surprise that a well's geospatial data provides important predictors, seeing as the previous scatter plot showed clustering. It *is,* however, a surprise that a well's construction date within the year plays a role, as does the elusive "other" form of extraction. As such I encourage the well managers and water committees of the world to:
 1. **Pay special attention to the seasonal conditions when building wells.** Perhaps wells made in the winter are more prone to breaking, and so on.
 1. **Carefully monitor the usage of non-standard extraction methods.**
 1. **Try to avoid building wells at GPS heights that correlate with well failure.**
