@@ -3,12 +3,11 @@
 
 # Introduction
 
-This project looks at housing prices in King County, Washington--which includes Seattle, Bellevue, Renton, Tacoma, and a handful of smaller cities and countryside. Housing data was sourced from [Kaggle](https://www.kaggle.com/harlfoxem/housesalesprediction), manipulated and cleaned in Python as a Pandas dataframe, and ultimately modelled in an iterative approach using StatsModels and Scikit-learn.
+This project looks at the condition of water wells in the East-African country of Tanzania, with the aim of building a machine learning model that predicts the condition of any given well. Predictions are made from a set of independent variables such as `funder`, `yr_built`, `region`, and so on. All of the data is available for free at [this competition link](https://www.drivendata.org/competitions/7/pump-it-up-data-mining-the-water-table/).
 
-More specifically, this project looks at best choices for first-time buyers in the Seattle area, and aims to answer the question:
-> "What factors bring down the price of a house the most, with least impact to overall quality?"
+The models in this project were based exclusively on the files named `train_labels.csv` and `train_vals.csv`, though a third `target_vals.csv` is also available for competition entries. The data was manually cleaned in the notebook `cleaning.ipynb` and made into a Pandas DataFrame. This DataFrame (boasting 59,000 rows and 31 features) was then brough to the `modeling.ipynb` notebook where four main ML algorithims were used. A general overview of the cleaning process and all ML models are provided in the following sections.
 
-Obviously, this is a fairly subjective question, but categories will be posited later that aim to answer which variables count as having "least impact" on the quality of a home.
+To be explicit, this is a **ternary classification problem,** where the three possible classes are **functional, functional-needs-repairs, and nonfunctional.** The aim of this project is to make a model that accurately applies these three labels, and later to investigate **what features have the greatest effect on predictions.** In doing so, the Tanzanian government (as well as independent aid organizations) can be aided in distributing resources and help to communities in need of clean, accessible water.
 
 All in all, the following packages were used:
 - Pandas
@@ -22,89 +21,107 @@ All in all, the following packages were used:
 
 # EDA and Cleaning 
 
-## Column Names
+## General Cleaning
 
-The first (and perhaps most important) part of cleaning this data was sorting through the columns, identifying their meaning, and determining their usefulness to the project. The full list is as follows:
-`['id', 'date', 'price', 'bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors', 'waterfront', 'view', 'condition', 'grade', 'sqft_above', 'sqft_basement', 'yr_built', 'yr_renovated', 'zipcode', 'lat', 'long', 'sqft_living15', 'sqft_lot15']`
-Columns with `15` at the end refer to the values for the nearest 15 neighbors, waterfront is a yes-no column of whether or not you're on it, and view *claims* to represent whether or not the home has been viewed, yet the values range from 0-4. (Almost every value was 0, and this column was later dropped.)
+The data cleaning on this project was fairly straightforward. Nothing too odd or frustrating was present in the data, aside from the oft-expectable case of 0's being used in an unclear manner (Are they 0's? Are they placeholders?). A handful of columns that were almost entirely NaN values or 0's were dropped, including `num_private`, which was 99% 0-values, and `scheme_name`, which was over 50% NaN.
 
-## Data Types, Duplicates, And Missing Values
+Beyond this, the brunt of the data cleaning involved sorting through the numerous columns in this dataset with `_class` and `_group` suffixes to see where there were redundancies. Count plots were made for the members of any set (such as `extraction`, `extraction_type`, etc.) to see which member of that set should be kept, and the redundant features were dropped. A feature that produced examples such as the plot below (high variance in class distribution across values, note orange bar in "other") were kept.
 
-The `date` column was changed from strings to datetimes, `sqft_basement` was purged of an erroneous `?` value in many of its rows, and `date` was further manipulated into being represented as `day_of_year` (1-365) so that the model could use it better for predictions (as opposed to interpteting `02-15-2011`, for example).
+![Extraction Count Plot](/images/extraction_bar.png)
 
-There were no fully-duplicated rows in the data that needed to be expunged, but there were 117 rows with duplicate ID's--likely homes that were resold. These rows were dropped from the data as they represented only 0.01% of it.
+This thinned the herd down to 31 features. These features were, unfortunately, largely categorical and had to be made into dummy variables. Value counts were printed for all categorical columns and inspected. Dummy variables were made in such a way as to minimize the amount needed. If, for example, the most common value was at 80% frequency and the next was only at 10% frequency, there would only be a dummy variable made for that most-common value only. From here, the data was ready to be modelled on. But before we talk about that, I'd like to share a few EDA insights with the following images.
 
-The columns `waterfront` and `yr_renovated` contained thousands of missing values each, both sets of which were replaced with the most likely outcome--0. This indicated "Not on the waterfront" and "Never been renovated" respectively.
+## EDA Insights
 
-With the data cleaned, a baseline model could be built.
+The count plot below shows the relationship between a well's source method and its functionality. We see that rivers and natural springs tend to perform quite well, whereas machine-drilled boreholes and shallow wells do quite poorly--along with lakes. This seems to suggest that more natural methods of water extraction are more successful in the long run.
 
-# Baseline Model
+![Water Source Count Plot](/images/source_bar.png)
 
-The first model takes all the data as-is, and uses every non-price column to predict the `price` column. No special modifications made, just plain and simple. The model's R-squared value was **0.692.** For the uninitiated, an R-squared value of **1** would mean that the linear regression model matches onto the predicted value (`price` here) *perfectly.* This is pretty unheard of. The next key metric, RMSE (root mean squared error, or, give-or-take how far off the model's guesses are) is **$213,446.**  For a baseline model however, the R-squared of 0.692 is *not bad,* but we *can* do better. The following models aim to do just that.
+This next count plot shows the same sort of relationships but in regard to the quality of water. It is in a way unsurprising that water described as "salty," "milky," or "unknown" could correlate with a misfunctioning pump. There is a serious imbalance problem here in that "good" water accounts for most instances, but it is still worth noting.
 
-![Scatter Plot Of Predicted And Actual Price For Baseline Model](/readme_images/model_base.PNG)
+![Water Quality Count Plot](/images/water_bar.png)
 
-# Model 2: Mean Normalization of Continuous Variables
+Lastly--and this is my favorite image in this document--here is a basic scatter plot of wells in Tanzania (with their colors signifying quality--green good, blue okay, red bad) superimposed on a Google map of the country. It is obvious that, while not extremely discrete, there *are* geographic impacts on well functionality.
 
-For this model I first sorted out the continuous variables from the categorical ones. The continuous variables were `['price', 'bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors', 'sqft_basement', 'yr_built', 'lat', 'long', 'sqft_living15', 'sqft_lot15', 'day_of_year']`. For each of these variables, a histogram was plotted to observe whether or not the data showed a normal distribution. In this case, only `['price', 'sqft_living15', 'sqft_living']` were deemed "normal enough," and the remaining columns were all mean-normalized (transformed such that their means were now 0, and their minimums and maximums were roughly -1 and 1 respectively).
+![Scatter Plot Of Well Function Over Tanzania](/images/tanzanian_wells.jpg)
 
-This model produced a dip in R-squared, down to **0.689,** and I suspected it may have been due to outliers in the data affecting the mean normalizations. Take a look at this plot to further see what I mean. Those lonely dots far down to the left are our price outliers, multi-million-dollar homes whose mere presence in the data throws the model into a tailspin.
+# Machine Learning Models
 
-![Scatter Plot Of Predicted And Actual Price For Mean Model 2](/readme_images/model_cont_var.PNG)
+## Baseline Model
 
-This impacted the RMSE of the model ever so slightly, bringing it down just a hair to **$213,306.** That's still a pretty massive margin. The subsequent models attempt to address these concerns.
+Due to the presence of some geographic clustering in the data, a KNearestNeighbors classifier was used to set a baseline. No hyperparameters were tweaked here, and an unimpressive **accuracy of 52%** was produced. Also, the model labeled nonfunctional pumps as functional twice as often as it labelled them correctly (true label 2, predicted as 0 below). Since this is the **most important class** to get right, this is unacceptable.
 
-# Model 3: Removing Outliers
+![Baseline Model Confusion Matrix](/images/base_matrix.png)
 
-It wasn't just `price` that had some extreme outliers. The columns `['price', 'bedrooms', 'sqft_lot', 'sqft_living', 'sqft_basement', 'sqft_lot15']` all had outliers as well (I'm looking at *you,* house with 33 bedrooms). Rows containing an outlier in any of these columns were dropped, and the model was reran with everything else unchanged.
+From here, the four following models were trained in the same manner:
+1. A Pipeline case was instantiated with a StandardScaler and a default-version of the given classifier.
+1. A parameter grid was made for this model.
+1. A GridSearchCV was made for the model and run.
+1. The best parameters found by the GridSearchCV instance were used to fit, train, and score the current model.
 
-It produced an R-squared value of **0.693** and and RMSE of **$137,906.** This was a considerable improvement on RMSE, and teh R-squared returned to where it was in the baseline.
+## K-Nearest Neighbors
 
-![Scatter Plot Of Predicted And Actual Price For Model 3](/readme_images/model_remove_outlier.PNG)
+The above methodology was applied to a KNN classifier. The only parameter tested was number of neighbors. This produced the following performance:
 
-# Model 4: Categorical Variables As Dummies
+![KNN Score](/images/score_knn.PNG)
 
-This model was based on the previous model, and involved data manipulation opposite that in model 2. IN other words, I focused on organizing the *categorical variables* in the dataset. Things like `condition`, `grade`, and `waterfront` that were either a binary category or didn't make sense on their own. (A grade of 3 has no meaning when abstracted from whatever rubric it's based on. Is it good? Bad?)
+The key observation here is that we now see an **accuracy of 0.70.** Recall on class 2 barely changed, and class 1's precision and recall are both abysmally low. This second piece will be a theme throughout. Perhaps, the class imbalance was causing this problem. So the data was SMOTE'd and used to retrain the same setup of classifier.
 
-In short, the variables `condition` and `grade` were made into multiple columns of dummy variables (with the first column dropped of course) and `zipcode` was replaced altogether by sorting `lat` and `long` variables into 4 city sectors, where their converging point sits just south of Mercer Island.
+![KNN Score With SMOTE](/images/score_knn_smote.PNG)
 
-This produced a bump in R-squared, up to **0.721** (which can be expected when we're adding so many variables to the model) and an RMSE of **$133,961.** The R-squared was definitely better, and the RMSE hardly changed. This model was kept moving forward.
+Strangely enough, this made things worse! This **lowered the overall accuracy** and **increased class 1's recall,** which I'm not too concerned about. Since the main improvement is minimal and less-important, and the data is now synthetic, SMOTE was not used for the rest of the models.
 
-![Scatter Plot Of Predicted And Actual Price For Model 4](/readme_images/model_cat_vals.PNG)
+## Decision Tree
 
-# Model 5: Selective Predictors
+Again, the same basic method was followed. Max depth, minimum samples per split, and minimum samples per leaf were all tested in the grid search. Expectations were lower, but wrongly so:
 
-Unsure of a novel change to apply to the data, I modelled it with a twist: I only fed in a variable if its coefficient in the model was at least 6 digits long. In other words, I only modelled that which had a massive impact on price. I though this would strengthen the model, but it didn't at all. R-squared was dropped to **0.675** (worse than the baseline) and RMSE was brought back up some to **$144,649.** Seeing no significant value to this model, it was scrapped. It did, however, produce interesting clumping in the prediction data (as seen in the horizontal clouds below). I did not have time to investigate this behavior.
+![Tree Score](/images/score_tree.PNG)
 
-![Scatter Plot Of Predicted And Actual Price For Model 5](/readme_images/model_selected_predictor.PNG)
+This model showed a **2 percentile point increase in accuracy** as well as a **10 percentile point increase in class 2 recall.** This was now the model to be compared against.
 
-# Model 6: Only P-Values Under 0.05
+## Random Forests
 
-This final model was based on model 4, and was mostly born out of the premise that none of your model's predictors should have a p-value over 0.05. It performed similarly to model 4, with an identical R-squared of **0.721** and a slightly-higher RMSE of **$135,925.** Seeing as this model was effectively the same as the previous best model, and it showed reduced complexity from dropping those low-p-value columns, it was kept, and bestowed the honor of **final model.**
+The RF model ended up being the best performer, and was tested with the same parameters as the decision tree model.
 
-![Scatter Plot Of Predicted And Actual Price For Model 6](/readme_images/model_p_above_005.PNG)
+![RF Model Score](/images/score_rf.PNG)
 
-# Recommendations
+This model showed up the competition with an **accuracy of 77% (a 5pp increase), and class 2 precision and recall of 78% and 72% respectively.** We also see a **decrease in misclassifications for class 0** (functional wells), and relatively little change for the liminal class 1.
 
-After iterating through all these models, we return to the initial question:
-> "What factors bring down the price of a house the most, with least impact to overall quality?"
+## Gradient Boosting
 
-I've done the dirty work behind the scenes, and can offer you this summary. The following conditions all have *negative* correlations with price, meaning that if they are met, that house will be a  better deal. Here's what to do:
+The gradient boosted model was trained just for thoroughness sake, and grid searched on the parameters of max depth and learning rate. It performed nearly as well as the random forest model:
 
-1. **Buy south of Mercer Island,** which puts you outside of the downtown region, into sectors 3 and 4.
-1. **Buy where the neighbors have big yards.** Generally, these homes are in less urban areas (again, not downtown) and consequently can spread out. This is based on `sqft_lot15`.
-1. **Buy new within reason.** Interestingly enough, `yr_built` has a negative correlation with price as well. Many older homes may be prized for their more aesthetic architecture or history.
-1. **Don't get a basement.** This one surprised me, but basement-having correlates positively with price, so.
-1. **Don't live on the waterfront,** but you should know that.
+![GB Model Score](/images/score_grad.PNG)
 
-# Future Research
+We see a few metrics drop by a percentage point or two, but **generally the same results as the previous model.**
 
-When next I aid first-time buyers in house-hunting in the greater Seattle area, I'd like to devote more time to feature-engineering and/or data-scraping, to get a better assessment of location's effect on price, especially proximity to areas of high cultural significance.
+## Modeling Summary
 
-In this research, the only spatial data points used to predict price were latitude and longitude which--while salient--only provide broad strokes of information. Predicting instead by zipcodes and aggregated zipcodes (such that they represent whole neighborhoods, suburbs, and discrete cities) would potentially be a greater predictor of price since similar areas would be grouped with similar areas. In other words, the reputation of "living in Renton" vs. "living in Bellevue," whatever that may mean, would be more present in the data when these spatial groups are recreated in it.
+The final model, as revealed previously, was decided to be **the RandomForestClassifier.** This model was chosen for a few reasons beyond its higher performance. If this model were to be built on more and/or reused for well data elsewhere in the world, the lower computational cost and hyperparameter tuning required to build RF models beats out GB. Moreover, GB models can tend towards overfitting data due to their sequential nature of training. If this well-classification model were to be used in other situations, perhaps by the same aid organizations who were kept in mind through its training, the overfitting problem could rear its ugly head.
 
-Two final spatial considerations would be proximity to cultural institutions and main streets. Does living next to Pike Place Market drive the price of your house up? What about the Olympic Sculpture park? How about if you live on Pine Street near all the cool restaurants? Intuition says "Yes" to all these, but the data has yet to speak.
+# Conclusions
 
-# Conclusion
+## Recommendations
 
-Thank you for lending me your time and consideration, and--more importantly--your trust. It is my sincere hope that the predictions and models set forth in this paper are beneficial to all the first-time buyers reading. Happy house hunting!
+While this project doesn't exaclty have any *business* recommendations, per se, they are a couple key insights that can be used in the field when assessing well functionality and predicting its cause(s). This plot below illustrates feature importance in predicting a well's functionality. In other words, it shows what data is most vital in getting that critical guess right. (Orange bars are just to draw attention to most significant features, they are not discrete categories.)
+
+![Feature Importances For Well Classification](/images/rf_model_importances.PNG)
+
+A well's **latitude, longitude, and height** all play a clear role in its classification. So do it's **construction year** and--interestingly enough--the **day of year** it was made. Lastly, the **extraction class** plays a key role, specifically when it's been glossed as "other."
+
+> Note: I am not sure why ID is a powerful predictor here. But I suspect it may have a relationship to the time the ID was assigned, though I was unable to identify any datetime patterns myself.
+
+It is no surprise that a well's geospatial data provides important predictors, seeing as the previous scatter plot showed clustering. It *is,* however, a surpise that a well's construction date within the year plays a role, as does the elusive "other" form of extraction. As such I encourage the well managers and water committees of the world to:
+1. **Pay special attention to the seasonal conditions when building wells.** Perhaps wells made in the winter are more prone to breaking, and so on.
+1. **Carefully monitor the usage of non-standard extraction methods.**
+1. **Try to avoid building wells at GPS heights that correlate with well failure.**
+
+## Future Research
+
+In my future research, I'd like to dig deeper into the GB and RF models both and see how much hyperparameter tuning can improve their performance, given the time and resources. Moreover, I'd like to see how well this well-classifier performs *outside* of Tanzania. Do other East African countries follow similar trends in well functionality? What about somewhere geologically distinct, like the American Midwest?
+
+More specifically, I'd also like to do more research into this "day of year" phenomenon, as well as *which* "other" extraction methods are most problematic, and whether or not their failure correlates with other variables. (Do certain "other" extractors perform better when installed in different seasons? What about at different elevations?)
+
+## Thank You
+
+I would like to thank the government of Tanzania for funding this research. I look forward to continuing this business relationship. *Asante sana!*
