@@ -27,7 +27,7 @@ The data cleaning on this project was fairly straightforward. Nothing too odd or
 
 Beyond this, the brunt of the data cleaning involved sorting through the numerous columns in this dataset with `_class` and `_group` suffixes to see where there were redundancies. Count plots were made for the members of any set (such as `extraction`, `extraction_type`, etc.) to see which member of that set should be kept, and the redundant features were dropped. A feature that produced examples such as the plot below (high variance in class distribution across values, note orange bar in "other") were kept.
 
-![Extraction Count Plot](/images/extraction_bar.png)
+![Extraction Count Plot](/images/extraction_bar.PNG)
 
 This thinned the herd down to 31 features. These features were, unfortunately, largely categorical and had to be made into dummy variables. Value counts were printed for all categorical columns and inspected. Dummy variables were made in such a way as to minimize the amount needed. If, for example, the most common value was at 80% frequency and the next was only at 10% frequency, there would only be a dummy variable made for that most-common value only. From here, the data was ready to be modelled on. But before we talk about that, I'd like to share a few EDA insights with the following images.
 
@@ -35,11 +35,11 @@ This thinned the herd down to 31 features. These features were, unfortunately, l
 
 The count plot below shows the relationship between a well's source method and its functionality. We see that rivers and natural springs tend to perform quite well, whereas machine-drilled boreholes and shallow wells do quite poorly--along with lakes. This seems to suggest that more natural methods of water extraction are more successful in the long run.
 
-![Water Source Count Plot](/images/source_bar.png)
+![Water Source Count Plot](/images/source_bar.PNG)
 
 This next count plot shows the same sort of relationships but in regard to the quality of water. It is in a way unsurprising that water described as "salty," "milky," or "unknown" could correlate with a misfunctioning pump. There is a serious imbalance problem here in that "good" water accounts for most instances, but it is still worth noting.
 
-![Water Quality Count Plot](/images/water_bar.png)
+![Water Quality Count Plot](/images/water_bar.PNG)
 
 Lastly--and this is my favorite image in this document--here is a basic scatter plot of wells in Tanzania (with their colors signifying quality--green good, blue okay, red bad) superimposed on a Google map of the country. It is obvious that, while not extremely discrete, there *are* geographic impacts on well functionality.
 
@@ -51,7 +51,7 @@ Lastly--and this is my favorite image in this document--here is a basic scatter 
 
 Due to the presence of some geographic clustering in the data, a KNearestNeighbors classifier was used to set a baseline. No hyperparameters were tweaked here, and an unimpressive **accuracy of 52%** was produced. Also, the model labeled nonfunctional pumps as functional twice as often as it labelled them correctly (true label 2, predicted as 0 below). Since this is the **most important class** to get right, this is unacceptable.
 
-![Baseline Model Confusion Matrix](/images/base_matrix.png)
+![Baseline Model Confusion Matrix](/images/base_matrix.PNG)
 
 From here, the four following models were trained in the same manner:
 1. A Pipeline case was instantiated with a StandardScaler and a default-version of the given classifier.
