@@ -107,12 +107,12 @@ While this project doesn't exactly have any *business* recommendations, per se, 
 
 ![Feature Importances For Well Classification](/images/rf_model_importances.PNG)
 
-A well's **latitude, longitude, and height** all play a clear role in its classification. So do it's **construction year** and--interestingly enough--the **day of year** it was made. Lastly, the **extraction class** plays a key role, specifically when it's been glossed as "other."
+A well's **latitude, longitude, and height** all play a clear role in its classification. So do it's **construction year** and--interestingly enough--the **day of year** the *recording* was made. Lastly, the **extraction class** plays a key role, specifically when it's been glossed as "other."
 
 > Note: I am not sure why ID is a powerful predictor here. But I suspect it may have a relationship to the time the ID was assigned, though I was unable to identify any datetime patterns myself.
 
-It is no surprise that a well's geospatial data provides important predictors, seeing as the previous scatter plot showed clustering. It *is,* however, a surprise that a well's construction date within the year plays a role, as does the elusive "other" form of extraction. As such I encourage the well managers and water committees of the world to:
-1. **Pay special attention to the seasonal conditions when building wells.** Perhaps wells made in the winter are more prone to breaking, and so on.
+It is no surprise that a well's geospatial data provides important predictors, seeing as the previous scatter plot showed clustering. It *is,* however, a surprise that the day a well's status was recorded plays a role, as does the elusive "other" form of extraction. As such I encourage the well managers and water committees of the world to:
+1. **Pay special attention to data-entry bias throughout the year.** Perhaps record-takers draw conclusions more stricly when weather is harsh, for example.
 1. **Carefully monitor the usage of non-standard extraction methods.**
 1. **Try to avoid building wells at GPS heights that correlate with well failure.**
 
